@@ -1,4 +1,3 @@
-# boss-
 # BOSS直聘智能爬虫
 
 基于 Python + DrissionPage 的 BOSS直聘职位爬虫，集成 AI 智能评估功能。
