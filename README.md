@@ -1,67 +1,224 @@
 # boss-
-这份 README 是专门为你的 **Boss 直聘自动化求职助手**（`gemini-code-1777024667050.py`）设计的。它不仅能让你的 GitHub 仓库看起来非常专业，还能清晰地展示你的技术栈，非常适合作为校招或实习申请的项目展示。
+# BOSS直聘智能爬虫
 
----
+基于 Python + DrissionPage 的 BOSS直聘职位爬虫，集成 AI 智能评估功能。
 
-# 🚀 BossDirect-Assistant: AI 驱动的精准求职助手
+## 功能特点
 
-**BossDirect-Assistant** 是一款基于 **DrissionPage** 和 **LLM (大语言模型)** 开发的自动化招聘数据分析工具。它能够自动抓取 Boss 直聘上的岗位信息，并利用 AI 模拟面试官思维，根据你的个人简历和偏好对岗位进行深度匹配度评估，助你从海量信息中筛选出真正心仪的机会。
+- 🔍 关键词搜索职位
+- 📊 自动滚动加载更多职位
+- 💰 网络抓包获取真实薪资
+- 🤖 AI 智能评估岗位（豆包API）
+- 📈 评分排序展示
+- 📄 自动保存到 Excel（每处理完一个职位就保存）
+- 🎛️ 灵活的开关配置
 
-## ✨ 核心特性
+## 环境准备
 
-* **自动化采集**：基于 `DrissionPage` 绕过复杂的反爬机制，稳定获取岗位详情、薪资、公司规模及要求。
-* **AI 智能评估**：对接豆包 (Doubao) 等大模型 API，根据预设的期望岗位、薪资和工作偏好，对每个岗位进行 **1-100 分** 的精准评分。
-* **深度洞察建议**：AI 会针对每个岗位给出具体的“投递建议”，告诉你该岗位的优缺点以及是否值得沟通。
-* **数据可视化准备**：自动将爬取结果导出为 Excel 表格，方便进行离线对比和二次分析。
-* **薪资透视**：自动解析薪资范围，计算平均月薪和年薪，让你对行业行情一目了然。
+### 1. 安装依赖
 
-## 🛠️ 技术栈
-
-* **语言**：Python 3.8+
-* **自动化**：[DrissionPage](https://drissionpage.cn/) (高性能浏览器控制库)
-* **数据处理**：Pandas, JSON, Re
-* **人工智能**：OpenAI SDK (对接接入字节跳动 Ark 平台)
-
-## 📦 快速开始
-
-### 1. 克隆项目
 ```bash
-git clone https://github.com/你的用户名/你的仓库名.git
-cd 你的仓库名
+pip install drissionpage openai pandas openpyxl
 ```
 
-### 2. 安装依赖
-```bash
-pip install DrissionPage pandas openai
+### 2. 启动 Chrome（重要！）
+
+使用以下命令启动 Chrome，开启远程调试端口：
+
+```cmd
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\selenium_profile"
 ```
 
-### 3. 配置参数
-打开 `gemini-code-1777024667050.py`，修改以下配置区域：
-* `AI_API_KEY`: 填入你的 API 密钥。
-* `USER_EXPECTED_JOB`: 你的目标岗位（如：Python 开发）。
-* `USER_PREFERENCES`: 你的硬性要求（如：不接受外包、双休）。
+**参数说明：**
+- `--remote-debugging-port=9222`：开启远程调试，端口9222
+- `--user-data-dir="C:\selenium_profile"`：独立的用户数据目录，保存登录状态
 
-### 4. 运行程序
+### 3. 浏览器配置
+
+在打开的 Chrome 中：
+1. 登录 BOSS直聘
+2. （可选）设置好地区、薪资等筛选条件
+
+## 快速开始
+
+### 方式1：直接运行
+
 ```bash
 python gemini-code-1777024667050.py
 ```
 
-## 📊 输出示例
+### 方式2：作为模块调用
 
-程序运行后，你将获得如下形式的实时分析：
+```python
+from gemini-code-1777024667050 import run_zhipin_spider
 
-> **[岗位名] Python 后端开发 (某互联网大厂)**
-> * **薪资**: 20K-35K | **年薪**: 320K-560K
-> * **AI 评分**: **88分**
-> * **AI 建议**: 该岗位薪资完全符合预期，公司背景优越。虽然有加班可能，但技术栈与你高度契合，建议立即投递并重点沟通年终奖细节。
+# 调用API
+result = run_zhipin_spider(keyword="Python", max_jobs=10)
 
-## ⚠️ 注意事项
+# 使用结果
+if result["success"]:
+    print(f"共爬取 {result['actual_count']} 个职位")
+    for job in result["jobs"]:
+        print(job["job_name"], job["salary"])
+```
 
-* **合规性**：本工具仅供学习和个人求职使用，请勿用于任何商业用途或大规模高频抓取。
-* **环境**：运行前请确保本地已安装 Chrome 或 Edge 浏览器。
-* **隐私**：上传到 GitHub 前，请务必删除代码中的 `AI_API_KEY`。
+## 配置说明
 
----
+在文件开头有4个独立开关：
 
-**Author**: DoubleZ  
-**Status**: 毕业季求职冲刺中 🎓
+```python
+# 开关1：关键词模式
+AUTO_KEYWORD = False          # True=自动使用默认值，False=手动输入
+DEFAULT_KEYWORD = "Python"     # 默认关键词
+
+# 开关2：爬取数量模式
+AUTO_MAXJOBS = False          # True=自动使用默认值，False=手动输入
+DEFAULT_MAXJOBS = 30          # 默认爬取数量
+
+# 开关3：AI评估模式
+ENABLE_AI_EVALUATION = True   # True=启用AI评估，False=禁用
+AI_API_KEY = "xxx"            # 豆包API Key
+AI_MODEL = "doubao-seed-2-0-pro-260215"
+
+# 开关4：Excel保存模式
+ENABLE_EXCEL_SAVE = True      # True=自动保存到Excel，False=禁用
+EXCEL_FILENAME = "boss_jobs_{timestamp}.xlsx"  # 文件名模板
+```
+
+## API 接口文档
+
+### `run_zhipin_spider(keyword="Python", max_jobs=30)`
+
+主入口函数，执行搜索和爬取。
+
+**参数：**
+- `keyword` (str): 搜索关键词，默认 "Python"
+- `max_jobs` (int): 爬取数量，默认 30
+
+**返回：**
+```python
+{
+    "success": bool,          # 是否成功
+    "keyword": str,           # 搜索关键词
+    "target_count": int,      # 目标数量
+    "actual_count": int,      # 实际爬取数量
+    "jobs": [Job对象...],     # 职位列表
+    "error": str | None       # 错误信息
+}
+```
+
+### Job 对象结构
+
+```python
+{
+    "index": 1,
+    "job_name": "全栈工程师（Python+AI）",
+    "salary": "8-12K",
+    "company": "融媒科技",
+    "address": "太原迎泽区永达大厦1楼",
+    "description": "岗位职责...",
+    "ai_evaluation": {  # （可选）AI评估结果
+        "score": 8,
+        "pros": ["薪资有竞争力", "发展前景好", "团队氛围好"],
+        "cons": ["加班较多", "通勤距离远", "福利一般"],
+        "suggestion": "可以考虑投递"
+    }
+}
+```
+
+## 模块说明
+
+### 模块0：AI评估模块
+- `evaluate_job_with_ai(job_data)`：使用豆包API评估岗位
+
+### 模块1：搜索流程
+- `perform_search(page, keyword)`：执行搜索，跳转到结果页
+
+### 模块2：数据抓取
+- `boss_ultimate_spider_logic(page, max_jobs)`：核心抓取逻辑
+
+### 模块3：参数获取
+- `get_manual_params()`：根据开关决定手动/自动获取参数
+
+### 模块4：结果展示
+- `print_final_summary(result)`：打印最终结果和AI排名
+
+## 二次开发指南
+
+### 1. 修改提示词
+
+找到 `evaluate_job_with_ai` 函数，修改 `prompt` 变量：
+
+```python
+prompt = f"""
+你的自定义提示词...
+{job_data['job_name']}
+...
+"""
+```
+
+### 2. 添加更多字段
+
+在 `boss_ultimate_spider_logic` 中修改 `job_data` 字典：
+
+```python
+job_data = {
+    "index": processed_count + 1,
+    "job_name": job_name,
+    "salary": salary,
+    "company": company,
+    "address": address,
+    "description": full_desc,
+    "your_custom_field": value  # 添加自定义字段
+}
+```
+
+### 3. 接入其他AI模型
+
+修改 `evaluate_job_with_ai` 函数，替换为你的AI调用逻辑。
+
+### 4. 保存数据
+
+添加保存功能（示例）：
+
+```python
+# 在 main() 函数最后添加
+with open("result.json", "w", encoding="utf-8") as f:
+    json.dump(result, f, ensure_ascii=False, indent=2)
+```
+
+## 项目结构
+
+```
+NEW_AI_CODE/
+├── gemini-code-1777024667050.py  # 主程序
+├── README.md                      # 本文档
+├── bug分析.md                     # Bug分析文档
+├── chromedriver.exe               # (可选) Chrome驱动
+├── 调用ai大模型api资料/
+│   ├── 参考资料调用豆包api示例代码.py
+│   └── 调用豆包api返回结果示例.txt
+└── (其他文件...)
+```
+
+## 常见问题
+
+### Q: 提示"无法连接到浏览器"？
+A: 确保已使用正确的命令启动 Chrome，端口9222没有被占用。
+
+### Q: 薪资显示"监听超时/缓存"？
+A: 网络请求捕获失败，检查页面是否正常加载，或增加等待时间。
+
+### Q: AI评估不工作？
+A: 检查 API Key 是否正确，确认 `ENABLE_AI_EVALUATION = True`。
+
+### Q: 如何更换为其他AI模型？
+A: 修改 `evaluate_job_with_ai` 函数中的 API 调用逻辑。
+
+## 许可证
+
+本项目仅供学习交流使用，请勿用于商业用途。
+
+## 贡献
+
+欢迎提交 Issue 和 PR！
